@@ -26,6 +26,24 @@ class GraphPlugin(PluginInterface):
     entry_point_group = "graph.plugins"  # Entry point for discovery
 
     # -------------------------------------------------------------------------
+    # EXECUTE (Main Entry Point for RemotePluginProxy)
+    # -------------------------------------------------------------------------
+
+    @abstractmethod
+    def execute(
+        self,
+        action: str = "get_schema",  # Action to perform (see docstring for available actions)
+        **kwargs
+    ) -> Dict[str, Any]:  # JSON-serializable result
+        """
+        Execute a graph operation. This is the main entry point for RemotePluginProxy.
+        
+        Dispatches to the appropriate method based on `action` parameter.
+        All return values are JSON-serializable dictionaries for HTTP transport.
+        """
+        ...
+
+    # -------------------------------------------------------------------------
     # CREATE
     # -------------------------------------------------------------------------
 
@@ -90,15 +108,6 @@ class GraphPlugin(PluginInterface):
         limit: int = 100  # Max results
     ) -> List[GraphNode]:  # Matching nodes
         """Find nodes by label."""
-        ...
-
-    @abstractmethod
-    def execute(
-        self,
-        query: Union[GraphQuery, str],  # Query object or raw query string
-        **kwargs
-    ) -> GraphContext:  # Query results as a subgraph
-        """Execute a generic query against the graph."""
         ...
 
     # -------------------------------------------------------------------------

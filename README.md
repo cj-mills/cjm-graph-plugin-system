@@ -170,6 +170,16 @@ from cjm_graph_plugin_system.plugin_interface import (
 class GraphPlugin(PluginInterface):
     "Abstract base class for all Context Graph plugins."
     
+    def execute(
+            self,
+            action: str = "get_schema",  # Action to perform (see docstring for available actions)
+            **kwargs
+        ) -> Dict[str, Any]:  # JSON-serializable result
+        "Execute a graph operation. This is the main entry point for RemotePluginProxy.
+
+Dispatches to the appropriate method based on `action` parameter.
+All return values are JSON-serializable dictionaries for HTTP transport."
+    
     def add_nodes(
             self,
             nodes: List[GraphNode]  # Nodes to create
@@ -214,13 +224,6 @@ class GraphPlugin(PluginInterface):
             limit: int = 100  # Max results
         ) -> List[GraphNode]:  # Matching nodes
         "Find nodes by label."
-    
-    def execute(
-            self,
-            query: Union[GraphQuery, str],  # Query object or raw query string
-            **kwargs
-        ) -> GraphContext:  # Query results as a subgraph
-        "Execute a generic query against the graph."
     
     def update_node(
             self,

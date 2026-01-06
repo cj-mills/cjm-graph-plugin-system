@@ -8,3 +8,269 @@
 ``` bash
 pip install cjm_graph_plugin_system
 ```
+
+## Project Structure
+
+    nbs/
+    ├── core.ipynb             # DTOs for Context Graph operations with FileBackedDTO support for zero-copy transfer
+    └── plugin_interface.ipynb # Domain-specific plugin interface for Context Graphs
+
+Total: 2 notebooks
+
+## Module Dependencies
+
+``` mermaid
+graph LR
+    core[core<br/>Core Data Structures]
+    plugin_interface[plugin_interface<br/>Graph Plugin Interface]
+
+    plugin_interface --> core
+```
+
+*1 cross-module dependencies detected*
+
+## CLI Reference
+
+No CLI commands found in this project.
+
+## Module Overview
+
+Detailed documentation for each module in the project:
+
+### Core Data Structures (`core.ipynb`)
+
+> DTOs for Context Graph operations with FileBackedDTO support for
+> zero-copy transfer
+
+#### Import
+
+``` python
+from cjm_graph_plugin_system.core import (
+    SourceRef,
+    GraphNode,
+    GraphEdge,
+    GraphContext,
+    GraphQuery
+)
+```
+
+#### Classes
+
+``` python
+@dataclass
+class SourceRef:
+    "A pointer to external data in another plugin's domain."
+    
+    plugin_name: str  # e.g., "cjm-transcription-plugin-voxtral-hf"
+    table_name: str  # e.g., "transcriptions"
+    row_id: str  # e.g., "b0ceddd3-..." (typically a job_id)
+    segment_slice: Optional[str]  # Optional slice: "char:0-500" or "timestamp:00:10-00:20"
+    
+    def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
+        "Convert to dictionary."
+```
+
+``` python
+@dataclass
+class GraphNode:
+    "Represents an entity in the Context Graph."
+    
+    id: str  # UUID
+    label: str  # e.g., "Person", "Concept", "Correction"
+    properties: Dict[str, Any] = field(...)  # Arbitrary metadata
+    sources: List[SourceRef] = field(...)  # Links to external plugins
+    
+    def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
+            """Convert to dictionary with nested sources."""
+            return {
+                "id": self.id,
+        "Convert to dictionary with nested sources."
+```
+
+``` python
+@dataclass
+class GraphEdge:
+    "Represents a relationship between two nodes."
+    
+    id: str  # UUID
+    source_id: str  # Origin node UUID
+    target_id: str  # Destination node UUID
+    relation_type: str  # e.g., "MENTIONS", "CORRECTS", "AUTHORED_BY"
+    properties: Dict[str, Any] = field(...)  # Arbitrary metadata
+    
+    def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
+        "Convert to dictionary."
+```
+
+``` python
+@dataclass
+class GraphContext:
+    "Container for graph query results (a subgraph)."
+    
+    nodes: List[GraphNode]  # Nodes in the subgraph
+    edges: List[GraphEdge]  # Edges in the subgraph
+    metadata: Dict[str, Any] = field(...)  # Query metadata, stats, etc.
+    
+    def to_temp_file(self) -> str:  # Absolute path to temporary JSON file
+            """Save graph data to a temp file for zero-copy transfer."""
+            tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode='w')
+            
+            data = {
+                "nodes": [n.to_dict() for n in self.nodes],
+        "Save graph data to a temp file for zero-copy transfer."
+    
+    def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
+            """Convert to dictionary."""
+            return {
+                "nodes": [n.to_dict() for n in self.nodes],
+        "Convert to dictionary."
+    
+    def from_file(
+            cls,
+            filepath: str  # Path to JSON file
+        ) -> "GraphContext":  # Reconstructed GraphContext
+        "Load graph context from a JSON file."
+    
+    def from_dict(
+            cls,
+            data: Dict[str, Any]  # Dictionary with nodes, edges, metadata
+        ) -> "GraphContext":  # Reconstructed GraphContext
+        "Load graph context from a dictionary."
+```
+
+``` python
+@dataclass
+class GraphQuery:
+    "A standardized query object for graph operations."
+    
+    query: str  # Raw query string (SQL, Cypher, etc.)
+    parameters: Dict[str, Any] = field(...)  # Query parameters
+    limit: int = 100  # Max results to return
+    depth: int = 1  # Traversal depth for neighborhood queries
+    
+    def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
+        "Convert to dictionary."
+```
+
+### Graph Plugin Interface (`plugin_interface.ipynb`)
+
+> Domain-specific plugin interface for Context Graphs
+
+#### Import
+
+``` python
+from cjm_graph_plugin_system.plugin_interface import (
+    GraphPlugin
+)
+```
+
+#### Classes
+
+``` python
+class GraphPlugin(PluginInterface):
+    "Abstract base class for all Context Graph plugins."
+    
+    def add_nodes(
+            self,
+            nodes: List[GraphNode]  # Nodes to create
+        ) -> List[str]:  # Created node IDs
+        "Bulk create nodes."
+    
+    def add_edges(
+            self,
+            edges: List[GraphEdge]  # Edges to create
+        ) -> List[str]:  # Created edge IDs
+        "Bulk create edges."
+    
+    def get_node(
+            self,
+            node_id: str  # UUID of node to retrieve
+        ) -> Optional[GraphNode]:  # Node or None if not found
+        "Get a single node by ID."
+    
+    def get_edge(
+            self,
+            edge_id: str  # UUID of edge to retrieve
+        ) -> Optional[GraphEdge]:  # Edge or None if not found
+        "Get a single edge by ID."
+    
+    def get_context(
+            self,
+            node_id: str,  # Starting node UUID
+            depth: int = 1,  # Traversal depth (1 = immediate neighbors)
+            filter_labels: Optional[List[str]] = None  # Only include nodes with these labels
+        ) -> GraphContext:  # Subgraph containing node and its neighborhood
+        "Get the neighborhood of a specific node."
+    
+    def find_nodes_by_source(
+            self,
+            source_ref: SourceRef  # External resource reference
+        ) -> List[GraphNode]:  # Nodes attached to this source
+        "Find all nodes linked to a specific external resource."
+    
+    def find_nodes_by_label(
+            self,
+            label: str,  # Node label to search for
+            limit: int = 100  # Max results
+        ) -> List[GraphNode]:  # Matching nodes
+        "Find nodes by label."
+    
+    def execute(
+            self,
+            query: Union[GraphQuery, str],  # Query object or raw query string
+            **kwargs
+        ) -> GraphContext:  # Query results as a subgraph
+        "Execute a generic query against the graph."
+    
+    def update_node(
+            self,
+            node_id: str,  # UUID of node to update
+            properties: Dict[str, Any]  # Properties to merge/update
+        ) -> bool:  # True if successful
+        "Partial update of node properties."
+    
+    def update_edge(
+            self,
+            edge_id: str,  # UUID of edge to update
+            properties: Dict[str, Any]  # Properties to merge/update
+        ) -> bool:  # True if successful
+        "Partial update of edge properties."
+    
+    def delete_nodes(
+            self,
+            node_ids: List[str],  # UUIDs of nodes to delete
+            cascade: bool = True  # Also delete connected edges
+        ) -> int:  # Number of nodes deleted
+        "Delete nodes (and optionally connected edges)."
+    
+    def delete_edges(
+            self,
+            edge_ids: List[str]  # UUIDs of edges to delete
+        ) -> int:  # Number of edges deleted
+        "Delete edges."
+    
+    def get_schema(self) -> Dict[str, Any]:  # Graph schema/ontology
+            """Return the current ontology/schema of the graph."""
+            ...
+    
+        @abstractmethod
+        def import_graph(
+            self,
+            graph_data: GraphContext,  # Data to import
+            merge_strategy: str = "overwrite"  # "overwrite", "skip", or "merge"
+        ) -> Dict[str, int]:  # Import statistics {nodes_created, edges_created, ...}
+        "Return the current ontology/schema of the graph."
+    
+    def import_graph(
+            self,
+            graph_data: GraphContext,  # Data to import
+            merge_strategy: str = "overwrite"  # "overwrite", "skip", or "merge"
+        ) -> Dict[str, int]:  # Import statistics {nodes_created, edges_created, ...}
+        "Bulk import a GraphContext (e.g., from backup or another plugin)."
+    
+    def export_graph(
+            self,
+            filter_query: Optional[GraphQuery] = None  # Optional filter
+        ) -> GraphContext:  # Exported subgraph or full graph
+        "Export the entire graph or a filtered subset."
+```

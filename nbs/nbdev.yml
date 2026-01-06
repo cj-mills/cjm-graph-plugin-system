@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "cjm-graph-plugin-system"
+  site-url: "https://cj-mills.github.io/cjm-graph-plugin-system"
+  description: "Defines the standardized interface and data structures for Context Graph plugins, enabling the semantic linking, decomposition, and enrichment of multi-modal content."
+  repo-branch: main
+  repo-url: "https://github.com/cj-mills/cjm-graph-plugin-system"

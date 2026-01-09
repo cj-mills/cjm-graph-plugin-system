@@ -12,10 +12,12 @@ pip install cjm_graph_plugin_system
 ## Project Structure
 
     nbs/
-    ├── core.ipynb             # DTOs for Context Graph operations with FileBackedDTO support for zero-copy transfer
-    └── plugin_interface.ipynb # Domain-specific plugin interface for Context Graphs
+    ├── utils/ (1)
+    │   └── mermaid.ipynb  # Convert GraphContext objects to Mermaid.js diagram strings for visualization
+    ├── core.ipynb              # DTOs for Context Graph operations with FileBackedDTO support for zero-copy transfer
+    └── plugin_interface.ipynb  # Domain-specific plugin interface for Context Graphs
 
-Total: 2 notebooks
+Total: 3 notebooks across 1 directory
 
 ## Module Dependencies
 
@@ -23,11 +25,13 @@ Total: 2 notebooks
 graph LR
     core[core<br/>Core Data Structures]
     plugin_interface[plugin_interface<br/>Graph Plugin Interface]
+    utils_mermaid[utils.mermaid<br/>Mermaid Diagram Generation]
 
     plugin_interface --> core
+    utils_mermaid --> core
 ```
 
-*1 cross-module dependencies detected*
+*2 cross-module dependencies detected*
 
 ## CLI Reference
 
@@ -150,6 +154,30 @@ class GraphQuery:
     
     def to_dict(self) -> Dict[str, Any]:  # Dictionary representation for JSON serialization
         "Convert to dictionary."
+```
+
+### Mermaid Diagram Generation (`mermaid.ipynb`)
+
+> Convert GraphContext objects to Mermaid.js diagram strings for
+> visualization
+
+#### Import
+
+``` python
+from cjm_graph_plugin_system.utils.mermaid import (
+    context_to_mermaid
+)
+```
+
+#### Functions
+
+``` python
+def context_to_mermaid(
+    ctx: GraphContext,  # The GraphContext to visualize
+    direction: str = "TD",  # Diagram direction: "TD" (top-down) or "LR" (left-right)
+    node_color_map: Optional[Dict[str, str]] = None  # Map of node labels to CSS colors
+) -> str:  # Mermaid.js diagram string
+    "Convert a GraphContext into a Mermaid.js diagram string."
 ```
 
 ### Graph Plugin Interface (`plugin_interface.ipynb`)

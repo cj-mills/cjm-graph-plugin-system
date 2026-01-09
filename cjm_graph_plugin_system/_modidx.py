@@ -62,4 +62,6 @@ d = { 'settings': { 'branch': 'main',
                                                           'cjm_graph_plugin_system.plugin_interface.GraphPlugin.update_edge': ( 'plugin_interface.html#graphplugin.update_edge',
                                                                                                                                 'cjm_graph_plugin_system/plugin_interface.py'),
                                                           'cjm_graph_plugin_system.plugin_interface.GraphPlugin.update_node': ( 'plugin_interface.html#graphplugin.update_node',
-                                                                                                                                'cjm_graph_plugin_system/plugin_interface.py')}}}
+                                                                                                                                'cjm_graph_plugin_system/plugin_interface.py')},
+            'cjm_graph_plugin_system.utils.mermaid': { 'cjm_graph_plugin_system.utils.mermaid.context_to_mermaid': ( 'utils/mermaid.html#context_to_mermaid',
+                                                                                                                     'cjm_graph_plugin_system/utils/mermaid.py')}}}

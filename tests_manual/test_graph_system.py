@@ -12,6 +12,8 @@ from cjm_graph_plugin_system.core import (
 )
 from cjm_graph_plugin_system.plugin_interface import GraphPlugin
 
+from cjm_graph_plugin_system.utils.mermaid import context_to_mermaid
+
 def title(msg):
     print(f"\n{'='*60}\n{msg}\n{'='*60}")
 
@@ -97,6 +99,28 @@ def verify_dto_serialization():
     assert loaded_edge.target_id == node_b.id
     
     print("  -> PASSED: Data survived the round-trip perfectly.")
+
+    # Check Edge integrity
+    loaded_edge = loaded_ctx.edges[0]
+    assert loaded_edge.source_id == node_a.id
+    assert loaded_edge.target_id == node_b.id
+    
+    print("  -> PASSED: Data survived the round-trip perfectly.")
+
+    # [NEW] Test Mermaid Generation
+    print("\n[Visual Check] Generating Mermaid Diagram...")
+    diagram = context_to_mermaid(
+        loaded_ctx, 
+        direction="LR",
+        node_color_map={"Person": "#ffaaaa", "Concept": "#aaaaff"}
+    )
+    print("\n--- Mermaid Code Start ---")
+    print(diagram)
+    print("--- Mermaid Code End ---\n")
+    assert "graph LR" in diagram
+    assert "Sun Tzu" in diagram
+    assert "-->|AUTHORED|" in diagram
+    print("  -> PASSED: Mermaid generation valid.")
     
     # Cleanup
     os.remove(temp_path)
